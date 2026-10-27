@@ -5,9 +5,13 @@ import { FILES_ROW_KIND, readFileChunk } from "./shared/files";
 export default function contribute(server: PluginServerContext) {
   server.on("agent.turn_ended", async (event, { paseo }) => {
     try {
-      const files = await findReferencedFiles(latestAssistantText(event.timeline), event.agent.cwd);
+      const agent = paseo.agents.ref(event.agent.id);
+      // Paseo 0.13 sends turn_ended with an empty timeline: fetch the end of the conversation instead.
+      const page = await agent.timeline.refetch({ direction: "tail", limit: 50 });
+      const text = latestAssistantText(page.entries.map(({ item }) => item));
+      const files = await findReferencedFiles(text, event.agent.cwd);
       if (files.length === 0) return;
-      await paseo.agents.ref(event.agent.id).timeline.append({
+      await agent.timeline.append({
         type: "plugin",
         id: `files-${Date.now()}`,
         kind: FILES_ROW_KIND,

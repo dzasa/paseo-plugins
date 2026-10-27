@@ -2,7 +2,7 @@ import { open, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, isAbsolute, relative, resolve } from "node:path";
 import type { RpcInput, RpcOutput } from "@getpaseo/plugin";
-import type { PluginLifecycleEvents } from "@getpaseo/plugin/server";
+import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
 import type { FilesRowData, readFileChunk } from "../shared/files";
 
 // Base64 of one chunk stays far below the daemon's 100 MiB socket frame cap.
@@ -13,9 +13,7 @@ const MAX_FILES = 50;
 // shortcut: paths with spaces are not detected, upgrade to the app's own link parser if that matters
 const PATH_PATTERN = /(?:~|\.{1,2})?\/[^\s`'"()<>[\]{}|:]+|[\w.@-]+(?:\/[\w.@-]+)+|[\w-]+\.[A-Za-z0-9]{1,8}\b/g;
 
-export function latestAssistantText(
-  timeline: PluginLifecycleEvents["agent.turn_ended"]["timeline"],
-): string {
+export function latestAssistantText(timeline: readonly AgentTimelineItem[]): string {
   let output = "";
   for (const item of timeline) {
     if (item.type === "user_message") output = "";
